@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: proyecto-geoespacial
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    networks:
+      - geo_network
+
+volumes:
+  postgres_data:
+
+networks:
+  geo_network:
+    driver: bridge

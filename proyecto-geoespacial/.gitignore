@@ -1,0 +1,63 @@
+# =========================
+# Variables de entorno
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Node.js
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build / salida
+dist/
+build/
+coverage/
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+
+# =========================
+# Docker
+# =========================
+.docker/
+docker-data/
+postgres_data/
+*.pid
+
+# =========================
+# Archivos temporales
+# =========================
+tmp/
+temp/
+.cache/
+*.tmp
+*.swp
+*.swo
+*~
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.iml
+
+# =========================
+# Sistema operativo
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Archivos locales opcionales
+# =========================
+uploads/
