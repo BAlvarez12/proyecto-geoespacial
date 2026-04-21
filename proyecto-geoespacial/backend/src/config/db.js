@@ -1,0 +1,15 @@
+const { Pool } = require("pg");
+const path = require("path");
+require("dotenv").config({
+  path: path.resolve(__dirname, "../../../.env"),
+});
+
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: Number(process.env.POSTGRES_PORT),
+  database: process.env.POSTGRES_DB,
+  user: process.env.POSTGRES_USER,
+  password: process.env.POSTGRES_PASSWORD,
+});
+
+module.exports = pool;

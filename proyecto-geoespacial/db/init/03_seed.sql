@@ -40,3 +40,19 @@ VALUES
     -90.513900,
     ST_SetSRID(ST_MakePoint(-90.513900, 14.640100), 4326)::geography
 );
+
+INSERT INTO puntos_interes_imagenes
+(puntos_interes_id, nombre_archivo, ruta_archivo, orden, es_principal)
+VALUES
+(1, 'palacio-1.jpg', '/uploads/puntos/palacio-1.jpg', 1, TRUE),
+(1, 'palacio-2.jpg', '/uploads/puntos/palacio-2.jpg', 2, FALSE),
+
+(2, 'zoologico-1.jpg', '/uploads/puntos/zoologico-1.jpg', 1, TRUE),
+(2, 'zoologico-2.jpg', '/uploads/puntos/zoologico-2.jpg', 2, FALSE),
+
+(3, 'gasolinera-1.jpg', '/uploads/puntos/gasolinera-1.jpg', 1, TRUE),
+
+(4, 'museo-1.jpg', '/uploads/puntos/museo-1.jpg', 1, TRUE),
+(4, 'museo-2.jpg', '/uploads/puntos/museo-2.jpg', 2, FALSE),
+
+(5, 'mercado-1.jpg', '/uploads/puntos/mercado-1.jpg', 1, TRUE);
