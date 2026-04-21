@@ -1,16 +1,18 @@
 const express = require("express");
 const router = express.Router();
 
-const upload = require("../middlewares/upload.middleware");
-
 const {
   obtenerPuntos,
   obtenerPuntoPorId,
   crearPunto,
-} = require("../controllers/puntos.controller");
+  obtenerPuntosPorCategoria,
+  obtenerPuntosCercanos,
+} = require("./puntos.controller");
 
 router.get("/", obtenerPuntos);
+router.get("/categoria/:categoria", obtenerPuntosPorCategoria);
+router.get("/cercanos", obtenerPuntosCercanos);
 router.get("/:id", obtenerPuntoPorId);
-router.post("/", upload.array("imagenes", 5), crearPunto);
+router.post("/", crearPunto);
 
 module.exports = router;

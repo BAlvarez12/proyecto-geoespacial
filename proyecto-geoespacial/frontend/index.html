@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa de Guatemala - Puntos de Interés</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar__header">
+        <h1>Mapa de Guatemala</h1>
+        <p>Puntos de interés geográficos</p>
+      </div>
+
+      <section class="panel">
+        <h2>Filtros por categoría</h2>
+        <div class="form-group">
+          <label for="categoria">Categoría</label>
+          <select id="categoria">
+            <option value="">Todas</option>
+            <option value="cultural">Cultural</option>
+            <option value="natural">Natural</option>
+            <option value="gastronomico">Gastronómico</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <button id="btnFiltrarCategoria" class="btn btn-primary">Filtrar</button>
+        <button id="btnCargarTodos" class="btn btn-secondary">Mostrar todos</button>
+      </section>
+
+      <section class="panel">
+        <h2>Búsqueda por cercanía</h2>
+        <div class="form-group">
+          <label for="latitud">Latitud</label>
+          <input type="number" id="latitud" step="any" placeholder="Ej. 14.641667" />
+        </div>
+
+        <div class="form-group">
+          <label for="longitud">Longitud</label>
+          <input type="number" id="longitud" step="any" placeholder="Ej. -90.513333" />
+        </div>
+
+        <div class="form-group">
+          <label for="radio">Radio en metros</label>
+          <input type="number" id="radio" step="1" placeholder="Ej. 1000" />
+        </div>
+
+        <button id="btnBuscarCercanos" class="btn btn-primary">Buscar cercanos</button>
+      </section>
+
+      <section class="panel">
+        <h2>Instrucciones</h2>
+        <p>Puedes usar los filtros o hacer clic en el mapa para llenar latitud y longitud automáticamente.</p>
+      </section>
+    </aside>
+
+    <main class="content">
+      <div id="map"></div>
+    </main>
+  </div>
+
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
-const puntosRoutes = require("./routes/puntos.routes");
+const puntosRoutes = require("./controllers/puntos.routes");
 
 const app = express();
 

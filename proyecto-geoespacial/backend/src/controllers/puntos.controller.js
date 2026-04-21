@@ -102,11 +102,8 @@ const obtenerPuntoPorId = async (req, res) => {
 };
 
 const crearPunto = async (req, res) => {
-  const client = await pool.connect();
-
   try {
     const { nombre, descripcion, categoria, latitud, longitud } = req.body;
-    const archivos = req.files || [];
 
     if (!nombre || !categoria || latitud === undefined || longitud === undefined) {
       return res.status(400).json({
@@ -125,9 +122,7 @@ const crearPunto = async (req, res) => {
       });
     }
 
-    await client.query("BEGIN");
-
-    const insertPuntoQuery = `
+    const query = `
       INSERT INTO puntos_interes (
         nombre,
         descripcion,
@@ -150,7 +145,7 @@ const crearPunto = async (req, res) => {
         created_at;
     `;
 
-    const puntoValues = [
+    const values = [
       nombre,
       descripcion || null,
       categoria,
@@ -158,66 +153,172 @@ const crearPunto = async (req, res) => {
       lng,
     ];
 
-    const puntoResult = await client.query(insertPuntoQuery, puntoValues);
-    const punto = puntoResult.rows[0];
-
-    const imagenesGuardadas = [];
-
-    for (let i = 0; i < archivos.length; i++) {
-      const archivo = archivos[i];
-      const orden = i + 1;
-      const esPrincipal = orden === 1;
-
-      const rutaArchivo = `/uploads/puntos/${archivo.filename}`;
-
-      const insertImagenQuery = `
-        INSERT INTO puntos_interes_imagenes (
-          puntos_interes_id,
-          nombre_archivo,
-          ruta_archivo,
-          orden,
-          es_principal
-        )
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING 
-          puntos_interes_imagenes_id,
-          nombre_archivo,
-          ruta_archivo,
-          orden,
-          es_principal;
-      `;
-
-      const imagenValues = [
-        punto.puntos_interes_id,
-        archivo.filename,
-        rutaArchivo,
-        orden,
-        esPrincipal,
-      ];
-
-      const imagenResult = await client.query(insertImagenQuery, imagenValues);
-      imagenesGuardadas.push(imagenResult.rows[0]);
-    }
-
-    await client.query("COMMIT");
+    const result = await pool.query(query, values);
 
     res.status(201).json({
       ok: true,
       message: "Punto de interés creado correctamente",
-      data: {
-        ...punto,
-        imagenes: imagenesGuardadas,
-      },
+      data: result.rows[0],
     });
   } catch (error) {
-    await client.query("ROLLBACK");
     console.error("Error creando punto:", error.message);
     res.status(500).json({
       ok: false,
       message: "Error al crear el punto de interés",
     });
-  } finally {
-    client.release();
+  }
+};
+
+const obtenerPuntosPorCategoria = async (req, res) => {
+  try {
+    const { categoria } = req.params;
+
+    if (!categoria) {
+      return res.status(400).json({
+        ok: false,
+        message: "La categoría es obligatoria",
+      });
+    }
+
+    const query = `
+      SELECT 
+        p.puntos_interes_id,
+        p.nombre,
+        p.descripcion,
+        p.categoria,
+        p.latitud,
+        p.longitud,
+        p.created_at,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'puntos_interes_imagenes_id', pi.puntos_interes_imagenes_id,
+              'nombre_archivo', pi.nombre_archivo,
+              'ruta_archivo', pi.ruta_archivo,
+              'orden', pi.orden,
+              'es_principal', pi.es_principal
+            )
+            ORDER BY pi.orden
+          ) FILTER (WHERE pi.puntos_interes_imagenes_id IS NOT NULL),
+          '[]'::json
+        ) AS imagenes
+      FROM puntos_interes p
+      LEFT JOIN puntos_interes_imagenes pi
+        ON pi.puntos_interes_id = p.puntos_interes_id
+      WHERE LOWER(p.categoria) = LOWER($1)
+      GROUP BY p.puntos_interes_id
+      ORDER BY p.puntos_interes_id;
+    `;
+
+    const result = await pool.query(query, [categoria]);
+
+    res.status(200).json({
+      ok: true,
+      total: result.rows.length,
+      categoria,
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error obteniendo puntos por categoría:", error.message);
+    res.status(500).json({
+      ok: false,
+      message: "Error al obtener los puntos por categoría",
+    });
+  }
+};
+
+const obtenerPuntosCercanos = async (req, res) => {
+  try {
+    const { lat, lng, radio } = req.query;
+
+    if (lat === undefined || lng === undefined || radio === undefined) {
+      return res.status(400).json({
+        ok: false,
+        message: "lat, lng y radio son obligatorios",
+      });
+    }
+
+    const latNum = Number(lat);
+    const lngNum = Number(lng);
+    const radioNum = Number(radio);
+
+    if (
+      Number.isNaN(latNum) ||
+      Number.isNaN(lngNum) ||
+      Number.isNaN(radioNum)
+    ) {
+      return res.status(400).json({
+        ok: false,
+        message: "lat, lng y radio deben ser números válidos",
+      });
+    }
+
+    if (radioNum <= 0) {
+      return res.status(400).json({
+        ok: false,
+        message: "El radio debe ser mayor a 0",
+      });
+    }
+
+    const query = `
+      SELECT 
+        p.puntos_interes_id,
+        p.nombre,
+        p.descripcion,
+        p.categoria,
+        p.latitud,
+        p.longitud,
+        p.created_at,
+        ROUND(
+          ST_Distance(
+            p.ubicacion,
+            ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography
+          )::numeric,
+          2
+        ) AS distancia_metros,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'puntos_interes_imagenes_id', pi.puntos_interes_imagenes_id,
+              'nombre_archivo', pi.nombre_archivo,
+              'ruta_archivo', pi.ruta_archivo,
+              'orden', pi.orden,
+              'es_principal', pi.es_principal
+            )
+            ORDER BY pi.orden
+          ) FILTER (WHERE pi.puntos_interes_imagenes_id IS NOT NULL),
+          '[]'::json
+        ) AS imagenes
+      FROM puntos_interes p
+      LEFT JOIN puntos_interes_imagenes pi
+        ON pi.puntos_interes_id = p.puntos_interes_id
+      WHERE ST_DWithin(
+        p.ubicacion,
+        ST_SetSRID(ST_MakePoint($2, $1), 4326)::geography,
+        $3
+      )
+      GROUP BY p.puntos_interes_id
+      ORDER BY distancia_metros ASC;
+    `;
+
+    const result = await pool.query(query, [latNum, lngNum, radioNum]);
+
+    res.status(200).json({
+      ok: true,
+      origen: {
+        lat: latNum,
+        lng: lngNum,
+        radio_metros: radioNum,
+      },
+      total: result.rows.length,
+      data: result.rows,
+    });
+  } catch (error) {
+    console.error("Error obteniendo puntos cercanos:", error.message);
+    res.status(500).json({
+      ok: false,
+      message: "Error al obtener los puntos cercanos",
+    });
   }
 };
 
@@ -225,4 +326,6 @@ module.exports = {
   obtenerPuntos,
   obtenerPuntoPorId,
   crearPunto,
+  obtenerPuntosPorCategoria,
+  obtenerPuntosCercanos,
 };
