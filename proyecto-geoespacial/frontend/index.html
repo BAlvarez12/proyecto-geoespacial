@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mapa de Guatemala - Puntos de Interés</title>
+  <title>MapsInteres</title>
 
   <link
     rel="stylesheet"
@@ -15,58 +15,246 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sidebar__header">
-        <h1>Mapa de Guatemala</h1>
-        <p>Puntos de interés geográficos</p>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar__brand">
+        <div class="topbar__logo" aria-hidden="true">M</div>
+        <h1 class="topbar__title">MapsInteres</h1>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <section class="map-section">
+        <div id="map"></div>
+
+        <div class="map-floating-controls">
+          <button id="btnMiUbicacion" class="map-fab" title="Mi ubicación" aria-label="Obtener mi ubicación">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2a1 1 0 0 1 1 1v1.07a8.002 8.002 0 0 1 6.93 6.93H21a1 1 0 1 1 0 2h-1.07a8.002 8.002 0 0 1-6.93 6.93V21a1 1 0 1 1-2 0v-1.07a8.002 8.002 0 0 1-6.93-6.93H3a1 1 0 1 1 0-2h1.07a8.002 8.002 0 0 1 6.93-6.93V3a1 1 0 0 1 1-1Zm0 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="map-legend">
+          <div class="legend-card">
+            <h3>Acciones rápidas</h3>
+            <p>Haz clic en el mapa para registrar un nuevo sitio.</p>
+            <p>Haz clic en un punto para ver su detalle.</p>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar">
+        <div class="sidebar__section">
+          <h2>Buscar sitios</h2>
+          <div class="form-group">
+            <label for="buscarNombre">Nombre del sitio</label>
+            <input type="text" id="buscarNombre" placeholder="Ej. Palacio Nacional" />
+          </div>
+          <button id="btnBuscarNombre" class="btn btn-primary">Buscar</button>
+        </div>
+
+        <div class="sidebar__section">
+          <h2>Filtrar por categoría</h2>
+          <div class="form-group">
+            <label for="categoria">Categoría</label>
+            <select id="categoria">
+              <option value="">Todas</option>
+              <option value="cultural">Cultural</option>
+              <option value="natural">Natural</option>
+              <option value="gastronomico">Gastronómico</option>
+              <option value="otro">Otro</option>
+            </select>
+          </div>
+
+          <div class="sidebar__buttons">
+            <button id="btnFiltrarCategoria" class="btn btn-primary">Filtrar</button>
+            <button id="btnCargarTodos" class="btn btn-light">Mostrar todos</button>
+          </div>
+        </div>
+
+        <div class="sidebar__section">
+          <h2>Búsqueda por cercanía</h2>
+
+          <div class="form-group">
+            <label for="latitud">Latitud</label>
+            <input type="number" id="latitud" step="any" placeholder="Ej. 14.641667" />
+          </div>
+
+          <div class="form-group">
+            <label for="longitud">Longitud</label>
+            <input type="number" id="longitud" step="any" placeholder="Ej. -90.513333" />
+          </div>
+
+          <div class="form-group">
+            <label for="radio">Radio en metros</label>
+            <input type="number" id="radio" step="1" placeholder="Ej. 1500" />
+          </div>
+
+          <div class="sidebar__buttons">
+            <button id="btnUsarMiUbicacionFiltro" class="btn btn-light">Usar mi ubicación</button>
+            <button id="btnBuscarCercanos" class="btn btn-primary">Buscar cercanos</button>
+          </div>
+        </div>
+
+        <div class="sidebar__section">
+          <div class="sidebar__section-title">
+            <h2>Resultados</h2>
+            <span id="resultadoCantidad" class="badge">0</span>
+          </div>
+
+          <div id="listaResultados" class="results-list">
+            <div class="empty-state">
+              Aún no hay resultados cargados.
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- Modal detalle -->
+  <div id="modalDetalle" class="modal hidden">
+    <div class="modal__backdrop" data-close="modalDetalle"></div>
+    <div class="modal__content modal__content--large">
+      <div class="modal__header">
+        <div>
+          <h2 id="detalleNombre">Detalle del sitio</h2>
+          <p id="detalleCategoria" class="modal__subtitle"></p>
+        </div>
+        <button class="modal__close" data-close="modalDetalle">&times;</button>
       </div>
 
-      <section class="panel">
-        <h2>Filtros por categoría</h2>
+      <div class="modal__body detail-layout">
+        <div class="detail-gallery" id="detalleGaleria">
+          <div class="detail-gallery__empty">Sin imágenes disponibles</div>
+        </div>
+
+        <div class="detail-info">
+          <div class="info-block">
+            <h3>Descripción</h3>
+            <p id="detalleDescripcion">Sin descripción</p>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <span>Latitud</span>
+              <strong id="detalleLatitud">-</strong>
+            </div>
+            <div class="info-card">
+              <span>Longitud</span>
+              <strong id="detalleLongitud">-</strong>
+            </div>
+          </div>
+
+          <div class="detail-actions">
+            <button id="btnIrAlSitio" class="btn btn-primary">Ir al sitio</button>
+            <button id="btnEditarSitio" class="btn btn-light">Editar sitio</button>
+            <button id="btnCerrarDetalle" class="btn btn-light" data-close="modalDetalle">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal registro / edición -->
+  <div id="modalRegistro" class="modal hidden">
+    <div class="modal__backdrop" data-close="modalRegistro"></div>
+    <div class="modal__content">
+      <div class="modal__header">
+        <div>
+          <h2 id="tituloModalRegistro">Registrar nuevo sitio</h2>
+          <p class="modal__subtitle">Completa la información del punto seleccionado</p>
+        </div>
+        <button class="modal__close" data-close="modalRegistro">&times;</button>
+      </div>
+
+      <form id="formRegistroPunto" class="modal__body">
         <div class="form-group">
-          <label for="categoria">Categoría</label>
-          <select id="categoria">
-            <option value="">Todas</option>
+          <label for="registroNombre">Nombre</label>
+          <input type="text" id="registroNombre" required />
+        </div>
+
+        <div class="form-group">
+          <label for="registroDescripcion">Descripción</label>
+          <textarea id="registroDescripcion" rows="4"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="registroCategoria">Categoría</label>
+          <select id="registroCategoria" required>
+            <option value="">Selecciona una categoría</option>
             <option value="cultural">Cultural</option>
             <option value="natural">Natural</option>
             <option value="gastronomico">Gastronómico</option>
             <option value="otro">Otro</option>
           </select>
         </div>
-        <button id="btnFiltrarCategoria" class="btn btn-primary">Filtrar</button>
-        <button id="btnCargarTodos" class="btn btn-secondary">Mostrar todos</button>
-      </section>
 
-      <section class="panel">
-        <h2>Búsqueda por cercanía</h2>
-        <div class="form-group">
-          <label for="latitud">Latitud</label>
-          <input type="number" id="latitud" step="any" placeholder="Ej. 14.641667" />
+        <div class="form-group" id="bloqueImagenesExistentes">
+          <label>Imágenes actuales</label>
+          <div id="registroImagenesExistentes" class="edit-images-grid">
+            <div class="empty-state empty-state--small">
+              Este sitio no tiene imágenes registradas.
+            </div>
+          </div>
+          <small class="input-help">
+            Marca las imágenes que deseas eliminar y luego guarda los cambios.
+          </small>
         </div>
 
         <div class="form-group">
-          <label for="longitud">Longitud</label>
-          <input type="number" id="longitud" step="any" placeholder="Ej. -90.513333" />
+          <label for="registroImagenes">Imágenes del sitio</label>
+          <input type="file" id="registroImagenes" accept="image/*" multiple />
+          <small id="registroImagenesAyuda" class="input-help">
+            Puedes seleccionar varias imágenes.
+          </small>
         </div>
 
-        <div class="form-group">
-          <label for="radio">Radio en metros</label>
-          <input type="number" id="radio" step="1" placeholder="Ej. 1000" />
+        <div class="form-row">
+          <div class="form-group">
+            <label for="registroLatitud">Latitud</label>
+            <input type="number" id="registroLatitud" step="any" required />
+          </div>
+
+          <div class="form-group">
+            <label for="registroLongitud">Longitud</label>
+            <input type="number" id="registroLongitud" step="any" required />
+          </div>
         </div>
 
-        <button id="btnBuscarCercanos" class="btn btn-primary">Buscar cercanos</button>
-      </section>
+        <div class="modal__footer">
+          <button type="button" class="btn btn-light" data-close="modalRegistro">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btnGuardarSitio">Guardar sitio</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-      <section class="panel">
-        <h2>Instrucciones</h2>
-        <p>Puedes usar los filtros o hacer clic en el mapa para llenar latitud y longitud automáticamente.</p>
-      </section>
-    </aside>
+  <!-- Acción rápida al hacer clic en mapa -->
+  <div id="quickMapAction" class="quick-map-action hidden">
+    <p>¿Deseas registrar un nuevo sitio aquí?</p>
+    <button id="btnAbrirRegistroDesdeMapa" class="btn btn-primary btn-sm">Registrar aquí</button>
+  </div>
 
-    <main class="content">
-      <div id="map"></div>
-    </main>
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <div id="modalConfirmacion" class="modal hidden">
+    <div class="modal__backdrop"></div>
+    <div class="modal__content modal__content--small">
+      <div class="modal__header">
+        <div>
+          <h2>Confirmación</h2>
+          <p class="modal__subtitle" id="confirmacionMensaje">¿Deseas continuar?</p>
+        </div>
+      </div>
+      <div class="modal__body">
+        <div class="modal__footer">
+          <button type="button" class="btn btn-light" id="btnConfirmacionCancelar">Cancelar</button>
+          <button type="button" class="btn btn-primary" id="btnConfirmacionAceptar">Continuar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script
